@@ -13,7 +13,6 @@ if opening tiff files
 """
 import time
 import numpy as np
-#from scipy import misc
 from scipy import ndimage
 import imageio
 
@@ -71,13 +70,13 @@ def find_best_correlation(frame1, frame2, x_range, y_range, blur):
     buffer = np.zeros((height+2*y_range, width+2*x_range, depth))
     buffer_height, buffer_width, buffer_debth = buffer.shape
     for x in range(-x_range, x_range+1):
-        # derife the shifted position   for x
+        # derive the shifted position   for x
         x_start = x_range + x
         x_end = buffer_width-x_range+x
         for y in range(-y_range, y_range+1):
             buffer = np.zeros((height+2*y_range, width+2*x_range, depth))
 
-            # derife the shifted position   for y
+            # derive the shifted position   for y
             y_start = y_range+y
             y_end = buffer_height-y_range+y
 
