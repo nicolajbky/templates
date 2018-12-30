@@ -21,11 +21,20 @@ import imageio
 
 
 def main():
-    frame =  imageio.imread('face.tiff')
-    print(frame.shape)
+    # loading template frame
+    frame_ =  imageio.imread('face.tiff')
 
+    # Since the data are only b/w, only one value per cell is relevant
+    # the following code transforms the tiff data accordingly
+    h, w, _ = frame_.shape
+    frame = np.zeros((h,w))
+    for y in range(h):
+        for x in range(w):
+            frame[y][x] = frame_[y][x][0]
+
+    # for the sake of testing, 10 runs of the same calculations are performed
     for _ in range(10):
-        x, y, error = find_best_correlation(frame, frame, 5, 5, 3)
+        x, y, error = find_best_correlation(frame, frame, 5, 5, 0)
 
     print('minimal error with shift x={}px and y={}px with error {}'.format(int(x),int(y), error))
 
@@ -43,7 +52,7 @@ def find_best_correlation(frame1, frame2, x_range, y_range, blur):
     returns x, y and error value for the shift with the minimal error
     """
     start_time = time.time()
-    height, width, depth = frame1.shape
+    height, width = frame1.shape
     if frame1.shape != frame2.shape:
         print('Frames have different solution!')
         return
@@ -67,14 +76,14 @@ def find_best_correlation(frame1, frame2, x_range, y_range, blur):
     # list of pixel shift in x and y direction and error
     shift_matrix = np.zeros(((x_range*2+1)*(y_range*2+1),3))
     index = 0
-    buffer = np.zeros((height+2*y_range, width+2*x_range, depth))
-    buffer_height, buffer_width, buffer_debth = buffer.shape
+    buffer = np.zeros((height+2*y_range, width+2*x_range))
+    buffer_height, buffer_width = buffer.shape
     for x in range(-x_range, x_range+1):
         # derive the shifted position   for x
         x_start = x_range + x
         x_end = buffer_width-x_range+x
         for y in range(-y_range, y_range+1):
-            buffer = np.zeros((height+2*y_range, width+2*x_range, depth))
+            buffer = np.zeros((height+2*y_range, width+2*x_range))
 
             # derive the shifted position   for y
             y_start = y_range+y
@@ -92,6 +101,7 @@ def find_best_correlation(frame1, frame2, x_range, y_range, blur):
 
             # integrate absolute error
             error = np.sum(difference)
+            #error = difference.sum()
             shift_matrix[index,:] = [x, y, error]
 
             index+=1
@@ -102,17 +112,17 @@ def find_best_correlation(frame1, frame2, x_range, y_range, blur):
     # get pixel shift
     x = shift_matrix[min_error_pos,0]
     y = shift_matrix[min_error_pos,1]
+    min_error = shift_matrix[min_error_pos,2]
 
     end_time = time.time()
 
-    print('x={0}px \ty={1}px \te={2} \t{3:.2f}s \t{4:.2f}Hz'.format(int(x),
+    print('x={0}px \ty={1}px \te={2} \t{3:.3f}s \t{4:.2f}Hz'.format(int(x),
                                                       int(y),
-                                                      int(error),
+                                                      int(min_error),
                                                       end_time-start_time,
                                                       1/(end_time-start_time)))
 
-
-    return x, y, error
+    return x, y, min_error
 
 
 
