@@ -33,8 +33,17 @@ def main():
             frame[y][x] = frame_[y][x][0]
 
     # for the sake of testing, 10 runs of the same calculations are performed
-    for _ in range(10):
+    runs=10
+    tic = time.time()
+    for _ in range(runs):
         x, y, error = find_best_correlation(frame, frame, 5, 5, 0)
+    toc = time.time()
+
+    print('Average {3:.3f}s \t{4:.2f}Hz'.format(int(x),
+                                                      int(y),
+                                                      int(error),
+                                                      (toc-tic)/runs,
+                                                      runs/(toc-tic)))
 
     print('minimal error with shift x={}px and y={}px with error {}'.format(int(x),int(y), error))
 
@@ -51,7 +60,7 @@ def find_best_correlation(frame1, frame2, x_range, y_range, blur):
 
     returns x, y and error value for the shift with the minimal error
     """
-    start_time = time.time()
+
     height, width = frame1.shape
     if frame1.shape != frame2.shape:
         print('Frames have different solution!')
@@ -76,25 +85,11 @@ def find_best_correlation(frame1, frame2, x_range, y_range, blur):
     # list of pixel shift in x and y direction and error
     shift_matrix = np.zeros(((x_range*2+1)*(y_range*2+1),3))
     index = 0
-    buffer = np.zeros((height+2*y_range, width+2*x_range))
-    buffer_height, buffer_width = buffer.shape
     for x in range(-x_range, x_range+1):
-        # derive the shifted position   for x
-        x_start = x_range + x
-        x_end = buffer_width-x_range+x
         for y in range(-y_range, y_range+1):
-            buffer = np.zeros((height+2*y_range, width+2*x_range))
-
-            # derive the shifted position   for y
-            y_start = y_range+y
-            y_end = buffer_height-y_range+y
-
-            # populate the buffer with the shifted frame content
-            buffer[y_start:y_end, x_start:x_end]=frame2
-
-            # crop frame to only populated cells
-            buffer = buffer[2*y_range:buffer_height-2*y_range,
-                            2*x_range:buffer_width-2*x_range]
+            # select shifted position of data in frame 2
+            buffer = frame2[y_range+y:height-y_range+y,
+                              x_range+x:width-x_range+x]
 
             # derive difference between frame1 and buffer (shifted frame2)
             difference= np.abs(frame1-buffer)
@@ -113,14 +108,6 @@ def find_best_correlation(frame1, frame2, x_range, y_range, blur):
     x = shift_matrix[min_error_pos,0]
     y = shift_matrix[min_error_pos,1]
     min_error = shift_matrix[min_error_pos,2]
-
-    end_time = time.time()
-
-    print('x={0}px \ty={1}px \te={2} \t{3:.3f}s \t{4:.2f}Hz'.format(int(x),
-                                                      int(y),
-                                                      int(min_error),
-                                                      end_time-start_time,
-                                                      1/(end_time-start_time)))
 
     return x, y, min_error
 
